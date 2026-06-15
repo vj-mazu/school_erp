@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store/appStore';
 import { api } from '../services/api';
-import { KeyRound, Smartphone, Loader2, Landmark } from 'lucide-react';
+import { KeyRound, Smartphone, Loader2, GraduationCap, ArrowRight } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const { setAuth, showToast } = useAppStore();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [focused, setFocused] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,91 +30,204 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center px-4 relative overflow-hidden">
-      {/* Background Indian Tricolor Gradient Highlights */}
-      <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brand-orange-500 via-white to-brand-green-600"></div>
-      
-      {/* Absolute background patterns */}
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-brand-orange-100/30 rounded-full blur-3xl"></div>
-      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-brand-green-100/30 rounded-full blur-3xl"></div>
+    <div className="min-h-screen flex flex-col justify-center items-center px-4 relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #0f172a 100%)',
+      }}
+    >
+      {/* Animated gradient orbs */}
+      <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full opacity-20"
+        style={{
+          background: 'radial-gradient(circle, #f97316 0%, transparent 70%)',
+          animation: 'pulse 4s ease-in-out infinite',
+        }}
+      />
+      <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full opacity-15"
+        style={{
+          background: 'radial-gradient(circle, #16a34a 0%, transparent 70%)',
+          animation: 'pulse 5s ease-in-out infinite reverse',
+        }}
+      />
+      <div className="absolute top-[40%] left-[50%] w-[300px] h-[300px] rounded-full opacity-10"
+        style={{
+          background: 'radial-gradient(circle, #3b82f6 0%, transparent 70%)',
+          animation: 'pulse 6s ease-in-out infinite',
+          transform: 'translate(-50%, -50%)',
+        }}
+      />
 
-      <div className="w-full max-w-md bg-white rounded-2xl border border-slate-100 shadow-xl p-8 relative">
-        {/* School Logo Area */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-brand-orange-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-brand-orange-200 mb-4 animate-bounce">
-            <Landmark size={32} />
-          </div>
-          <h2 className="text-xl font-extrabold text-slate-800 text-center leading-tight">
-            Shantiniketan Public School
-          </h2>
-          <p className="text-xs font-semibold text-brand-green-600 tracking-wider uppercase mt-1">
-            ERP Portal • Chapetla
-          </p>
-        </div>
+      {/* Top tricolor accent line */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-orange-500 via-white to-brand-green-600" />
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              Username (User ID)
-            </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                <Smartphone size={16} />
-              </span>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. superadmin / principal / clerk"
-                className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-orange-500 focus:bg-white text-sm transition-all"
+      {/* Main Card */}
+      <div
+        className="w-full max-w-[420px] relative"
+        style={{
+          animation: 'fadeInUp 0.6s ease-out',
+        }}
+      >
+        {/* Glassmorphism Card */}
+        <div className="rounded-3xl p-8 relative overflow-hidden"
+          style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.4)',
+          }}
+        >
+          {/* School Identity */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 relative"
+              style={{
+                background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                boxShadow: '0 8px 32px rgba(249, 115, 22, 0.35)',
+              }}
+            >
+              <GraduationCap size={30} className="text-white" />
+              {/* Glow ring */}
+              <div className="absolute inset-0 rounded-2xl"
+                style={{
+                  background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                  filter: 'blur(16px)',
+                  opacity: 0.4,
+                  zIndex: -1,
+                }}
               />
             </div>
+
+            <h1 className="text-xl font-extrabold text-white text-center leading-tight tracking-tight">
+              Shantiniketan Public School
+            </h1>
+            <p className="text-xs text-slate-400 tracking-[0.2em] uppercase mt-2 font-medium">
+              Chapetla, Madhya Pradesh
+            </p>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              Access Password
-            </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                <KeyRound size={16} />
-              </span>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-orange-500 focus:bg-white text-sm transition-all"
-              />
+          {/* Divider */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent to-slate-600" />
+            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Secure Login</span>
+            <div className="flex-1 h-px bg-gradient-to-l from-transparent to-slate-600" />
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Username Field */}
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Username
+              </label>
+              <div className="relative">
+                <span className={`absolute inset-y-0 left-0 pl-3.5 flex items-center transition-colors duration-200 ${focused === 'user' ? 'text-brand-orange-400' : 'text-slate-500'}`}>
+                  <Smartphone size={16} />
+                </span>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  onFocus={() => setFocused('user')}
+                  onBlur={() => setFocused(null)}
+                  placeholder="Enter your username"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl text-sm text-white placeholder:text-slate-500 transition-all duration-200 focus:outline-none"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: focused === 'user' ? '1px solid rgba(249, 115, 22, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: focused === 'user' ? '0 0 20px rgba(249, 115, 22, 0.1)' : 'none',
+                  }}
+                />
+              </div>
             </div>
-          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-brand-orange-600 hover:bg-brand-orange-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-brand-orange-100 hover:shadow-xl transition-all"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="animate-spin" size={16} />
-                Authenticating...
-              </>
-            ) : (
-              'Secure Log In'
-            )}
-          </button>
-        </form>
+            {/* Password Field */}
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <span className={`absolute inset-y-0 left-0 pl-3.5 flex items-center transition-colors duration-200 ${focused === 'pass' ? 'text-brand-orange-400' : 'text-slate-500'}`}>
+                  <KeyRound size={16} />
+                </span>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onFocus={() => setFocused('pass')}
+                  onBlur={() => setFocused(null)}
+                  placeholder="••••••••"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl text-sm text-white placeholder:text-slate-500 transition-all duration-200 focus:outline-none"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: focused === 'pass' ? '1px solid rgba(249, 115, 22, 0.5)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: focused === 'pass' ? '0 0 20px rgba(249, 115, 22, 0.1)' : 'none',
+                  }}
+                />
+              </div>
+            </div>
 
-        {/* Info Box */}
-        <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-          <div className="inline-block p-1 bg-brand-green-50 rounded text-[10px] text-brand-green-700 font-bold border border-brand-green-100">
-            CBSE Affiliation: CBSE-AFF-330129
+            {/* Login Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2.5 py-3.5 text-white text-sm font-bold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group"
+              style={{
+                background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                boxShadow: '0 8px 32px rgba(249, 115, 22, 0.3)',
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) {
+                  (e.target as HTMLElement).style.boxShadow = '0 12px 40px rgba(249, 115, 22, 0.45)';
+                  (e.target as HTMLElement).style.transform = 'translateY(-1px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                (e.target as HTMLElement).style.boxShadow = '0 8px 32px rgba(249, 115, 22, 0.3)';
+                (e.target as HTMLElement).style.transform = 'translateY(0)';
+              }}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin" size={16} />
+                  Authenticating...
+                </>
+              ) : (
+                <>
+                  Sign In
+                  <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Footer */}
+          <div className="mt-8 pt-5 border-t border-white/5 text-center">
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Having trouble logging in? Contact the school office.
+            </p>
           </div>
-          <p className="text-[11px] text-slate-400 mt-3">
-            Having trouble logging in? Please contact the School Office Administrator.
-          </p>
         </div>
       </div>
+
+      {/* Bottom branding */}
+      <p className="mt-6 text-[10px] text-slate-600 tracking-wider">
+        School ERP Management System
+      </p>
+
+      {/* Keyframe animations */}
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(24px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 0.15; }
+          50% { transform: scale(1.1); opacity: 0.25; }
+        }
+      `}</style>
     </div>
   );
 };
