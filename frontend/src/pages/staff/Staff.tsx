@@ -3,16 +3,17 @@ import { useAppStore } from '../../store/appStore';
 import { api } from '../../services/api';
 import { 
   UserCog, UserPlus, Search, Save, BadgePercent, 
-  Banknote, Landmark, Briefcase, GraduationCap, Download, Image
+  Banknote, Landmark, Briefcase, GraduationCap, Download, Image, Printer
 } from 'lucide-react';
 import { exportToCSV } from '../../utils/export';
 
 export const Staff: React.FC = () => {
-  const { showToast } = useAppStore();
+  const { showToast, activeYear } = useAppStore();
   const [subView, setSubView] = useState<'list' | 'add'>('list');
   const [staff, setStaff] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [filterDept, setFilterDept] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
 
   // Edit and View states
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
@@ -58,6 +59,7 @@ export const Staff: React.FC = () => {
       const params: any = { limit: 50 };
       if (cursorVal) params.cursor = cursorVal;
       if (filterDept) params.department = filterDept;
+      if (filterStatus) params.status = filterStatus;
       if (search) params.search = search;
 
       const query = new URLSearchParams(params).toString();
@@ -84,7 +86,7 @@ export const Staff: React.FC = () => {
     if (subView === 'list') {
       loadStaff();
     }
-  }, [filterDept, search, subView]);
+  }, [filterDept, filterStatus, search, subView]);
 
   const formatSalaryInput = (val: string) => {
     const digits = val.replace(/\D/g, '');
@@ -118,6 +120,14 @@ export const Staff: React.FC = () => {
     if (!emailRegex.test(formData.email)) {
       showToast('Please enter a valid email address.', 'error');
       return;
+    }
+
+    if (formData.bankAccountNumber) {
+      const accLen = formData.bankAccountNumber.length;
+      if (accLen < 9 || accLen > 18) {
+        showToast('Bank Account Number must be between 9 and 18 digits.', 'error');
+        return;
+      }
     }
 
     const payload = {
@@ -263,17 +273,25 @@ export const Staff: React.FC = () => {
 
       {subView === 'list' ? (
         <div className="card space-y-4">
-          <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+          <div className="flex justify-between items-center pb-2 border-b border-slate-100 no-print">
             <h3 className="font-bold text-sm text-slate-700">Worksheet Staff Registry Grid</h3>
-            <button 
-              onClick={triggerExcelExport}
-              className="px-2.5 py-1.5 bg-brand-green-600 hover:bg-brand-green-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm hover:shadow"
-            >
-              <Download size={14} /> Export to Excel
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={triggerExcelExport}
+                className="px-2.5 py-1.5 bg-brand-green-600 hover:bg-brand-green-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm hover:shadow"
+              >
+                <Download size={14} /> Export to Excel
+              </button>
+              <button 
+                onClick={() => window.print()}
+                className="px-2.5 py-1.5 bg-brand-orange-600 hover:bg-brand-orange-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm hover:shadow"
+              >
+                <Printer size={14} /> Print / Save PDF
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 no-print">
             <div className="relative md:col-span-2">
               <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
                 <Search size={16} />
@@ -300,27 +318,46 @@ export const Staff: React.FC = () => {
               <option value="Administration">Administration</option>
               <option value="Other">Other</option>
             </select>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="form-input font-bold"
+            >
+              <option value="">All Statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Deactive</option>
+            </select>
+          </div>
+
+          {/* Print-Only Professional Header */}
+          <div className="hidden print:block mb-4 text-slate-900">
+            <h1 className="text-sm font-extrabold uppercase tracking-tight text-center">SHANTINIKETAN PUBLIC SCHOOL, CHAPETLA</h1>
+            <div className="flex justify-between items-center text-[10px] font-bold border-b border-blue-400 pb-1 mt-1">
+              <div>Academic Year: {activeYear ? activeYear.name : 'N/A'}</div>
+              <div>Report: Staff HR Directory</div>
+              <div>Department: {filterDept || 'All'} | Status: {filterStatus || 'All'}</div>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="excel-table">
               <thead>
                 <tr>
-                  <th className="excel-th w-12 text-center">Photo</th>
+                  <th className="excel-th w-12 text-center no-print">Photo</th>
                   <th className="excel-th">Employee ID</th>
                   <th className="excel-th">Name</th>
                   <th className="excel-th">Designation</th>
                   <th className="excel-th">Department</th>
                   <th className="excel-th">Mobile</th>
                   <th className="excel-th">Salary (Basic)</th>
-                  <th className="excel-th">Status</th>
-                  <th className="excel-th w-24 text-center">Actions</th>
+                  <th className="excel-th text-left">Status</th>
+                  <th className="excel-th w-24 text-center no-print">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {staff.map((st) => (
                   <tr key={st.id}>
-                    <td className="excel-td flex justify-center items-center">
+                    <td className="excel-td flex justify-center items-center no-print">
                       {st.photoUrl ? (
                         <img src={st.photoUrl} alt="" className="w-8 h-8 rounded border object-cover" />
                       ) : (
@@ -346,7 +383,7 @@ export const Staff: React.FC = () => {
                         {st.status}
                       </span>
                     </td>
-                    <td className="excel-td">
+                    <td className="excel-td no-print">
                       <div className="flex gap-1 justify-center items-center py-0.5">
                         <button 
                           onClick={() => setViewingStaff(st)}
@@ -659,20 +696,19 @@ export const Staff: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, bankName: e.target.value.toUpperCase() })}
                     className="form-input uppercase"
                   />
-                </div>
-                <div>
+                            <div>
                   <label className="form-label">Account Number</label>
                   <input
                     type="text"
                     value={formData.bankAccountNumber}
                     onChange={(e) => {
                       const val = e.target.value.replace(/\D/g, '');
-                      if (val.length <= 12) {
+                      if (val.length <= 18) {
                         setFormData({ ...formData, bankAccountNumber: val });
                       }
                     }}
-                    maxLength={12}
-                    placeholder="Max 12 digits"
+                    maxLength={18}
+                    placeholder="9 to 18 digits"
                     className="form-input"
                   />
                 </div>
@@ -683,15 +719,15 @@ export const Staff: React.FC = () => {
                     value={formData.bankIfsc}
                     onChange={(e) => {
                       const val = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-                      if (val.length <= 8) {
+                      if (val.length <= 9) {
                         setFormData({ ...formData, bankIfsc: val });
                       }
                     }}
-                    maxLength={8}
-                    placeholder="Max 8 chars"
+                    maxLength={9}
+                    placeholder="Max 9 chars"
                     className="form-input uppercase"
                   />
-                </div>
+                </div>      </div>
               </div>
             </div>
 

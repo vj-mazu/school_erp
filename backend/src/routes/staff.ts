@@ -22,12 +22,19 @@ const parseNumInt = (val: any): number => {
 
 // LIST ALL STAFF
 router.get('/', authenticateToken as any, async (req: AuthenticatedRequest, res) => {
-  const { department, search, limit, cursor } = req.query;
+  const { department, search, limit, cursor, status } = req.query;
   const schoolId = req.user?.schoolId;
 
   try {
     const filters: any = { schoolId };
     if (department) filters.department = department as string;
+    if (status) {
+      if (status === 'INACTIVE' || status === 'DEACTIVE') {
+        filters.status = { not: 'ACTIVE' };
+      } else {
+        filters.status = status as StaffStatus;
+      }
+    }
     if (search) {
       filters.OR = [
         { firstName: { contains: search as string, mode: 'insensitive' } },
