@@ -96,30 +96,41 @@ router.get('/dashboard-stats', authenticateToken as any, async (req: Authenticat
       }
     });
 
-    // 3. Count today's student attendance presence
+    // 3. Count today's student attendance presence using groupBy
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const todayEnd = new Date();
     todayEnd.setHours(23, 59, 59, 999);
 
-    const todayAttendance = await prisma.attendance.findMany({
+    const todayAttendanceStats = await prisma.attendance.groupBy({
+      by: ['status'],
       where: {
         academicYearId,
         date: {
           gte: todayStart,
           lte: todayEnd
         }
+      },
+      _count: {
+        id: true
       }
     });
 
-    const totalAttendanceMarked = todayAttendance.length;
-    const presentAttendance = todayAttendance.filter(a => ['PRESENT', 'LATE', 'ON_DUTY'].includes(a.status)).length;
-    const studentPresencePercent = totalAttendanceMarked > 0 
-      ? parseFloat(((presentAttendance / totalAttendanceMarked) * 100).toFixed(1)) 
-      : 96.2; // Default realistic standard if not marked yet
+    let totalAttendanceMarked = 0;
+    let presentCount = 0;
 
-    const presentCount = presentAttendance;
-    const absentCount = totalAttendanceMarked - presentAttendance;
+    todayAttendanceStats.forEach(stat => {
+      const count = stat._count.id;
+      totalAttendanceMarked += count;
+      if (['PRESENT', 'LATE', 'ON_DUTY'].includes(stat.status)) {
+        presentCount += count;
+      }
+    });
+
+    const absentCount = totalAttendanceMarked - presentCount;
+    const studentPresencePercent = totalAttendanceMarked > 0 
+      ? parseFloat(((presentCount / totalAttendanceMarked) * 100).toFixed(1)) 
+      : 96.2; // Default realistic standard if not marked yet
 
     // 4. Count Staff members
     const totalStaff = await prisma.staff.count({
@@ -129,8 +140,11 @@ router.get('/dashboard-stats', authenticateToken as any, async (req: Authenticat
       }
     });
 
-    // 5. Total Fee Collected Today
-    const todayPayments = await prisma.feePayment.findMany({
+    // 5. Total Fee Collected Today using aggregate
+    const paymentAggregate = await prisma.feePayment.aggregate({
+      _sum: {
+        netAmount: true
+      },
       where: {
         academicYearId,
         paymentDate: {
@@ -140,7 +154,7 @@ router.get('/dashboard-stats', authenticateToken as any, async (req: Authenticat
       }
     });
 
-    const feeCollectedToday = todayPayments.reduce((sum, payment) => sum + Number(payment.netAmount), 0);
+    const feeCollectedToday = Number(paymentAggregate._sum.netAmount || 0);
 
     // 6. Recent collections (last 5)
     const recentPayments = await prisma.feePayment.findMany({
@@ -180,28 +194,59 @@ router.get('/dashboard-stats', authenticateToken as any, async (req: Authenticat
       audience: c.targetAudience.replace('_', ' ')
     }));
 
-    // 8. 7-Day Attendance Trend
+    // 8. 7-Day Attendance Trend using one fast groupBy query
+    const trendStart = new Date();
+    trendStart.setDate(trendStart.getDate() - 6);
+    trendStart.setHours(0, 0, 0, 0);
+
+    const trendEnd = new Date();
+    trendEnd.setHours(23, 59, 59, 999);
+
+    const trendGroupResult = await prisma.attendance.groupBy({
+      by: ['date', 'status'],
+      where: {
+        academicYearId,
+        date: {
+          gte: trendStart,
+          lte: trendEnd
+        }
+      },
+      _count: {
+        id: true
+      }
+    });
+
+    // Format group results by date string
+    const statsByDate: { [key: string]: { total: number; present: number } } = {};
+    trendGroupResult.forEach(item => {
+      const dateStr = new Date(item.date).toISOString().split('T')[0];
+      if (!statsByDate[dateStr]) {
+        statsByDate[dateStr] = { total: 0, present: 0 };
+      }
+      const count = item._count.id;
+      statsByDate[dateStr].total += count;
+      if (['PRESENT', 'LATE', 'ON_DUTY'].includes(item.status)) {
+        statsByDate[dateStr].present += count;
+      }
+    });
+
     const attendanceTrend = [];
+    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       d.setHours(0, 0, 0, 0);
 
-      const endD = new Date(d);
-      endD.setHours(23, 59, 59, 999);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayStats = statsByDate[dateStr];
 
-      const dayAttendance = await prisma.attendance.findMany({
-        where: {
-          academicYearId,
-          date: { gte: d, lte: endD }
-        }
-      });
+      let dayPercent = 0;
+      if (dayStats && dayStats.total > 0) {
+        dayPercent = Math.round((dayStats.present / dayStats.total) * 100);
+      } else {
+        dayPercent = (90 + (d.getDate() % 8)); // Deterministic fallback
+      }
 
-      const dayTotal = dayAttendance.length;
-      const dayPresent = dayAttendance.filter(a => ['PRESENT', 'LATE', 'ON_DUTY'].includes(a.status)).length;
-      const dayPercent = dayTotal > 0 ? Math.round((dayPresent / dayTotal) * 100) : (90 + Math.floor(Math.random() * 8));
-
-      const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       attendanceTrend.push({
         day: i === 0 ? 'Today' : daysOfWeek[d.getDay()],
         percentage: dayPercent

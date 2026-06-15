@@ -68,7 +68,12 @@ router.get('/', authenticateToken as any, async (req: AuthenticatedRequest, res)
     const currentYearIndex = academicYears.findIndex(y => y.id === academicYearId);
 
     // Only carry forward/promote if there is a chronologically preceding academic year in the database
-    if (currentYearIndex > 0) {
+    // and if the current academic year is completely empty of students (run promotion only once)
+    const targetStudentsCount = await prisma.student.count({
+      where: { schoolId, academicYearId }
+    });
+
+    if (currentYearIndex > 0 && targetStudentsCount === 0) {
       const sourceYear = academicYears[currentYearIndex - 1];
 
       // Fetch all active students from the preceding year along with their guardians and current class details
