@@ -31,7 +31,14 @@ const allowedOrigins = process.env.FRONTEND_URL
   : ['*'];
 
 app.use(cors({
-  origin: allowedOrigins.includes('*') ? '*' : allowedOrigins,
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-academic-year-id'],
   credentials: true

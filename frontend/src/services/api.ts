@@ -16,7 +16,15 @@ async function request(url: string, options: RequestInit = {}) {
     headers.set('x-academic-year-id', activeYear.id);
   }
 
-  const response = await fetch(`${BASE_URL}${url}`, {
+  let cleanedUrl = url;
+  if (BASE_URL) {
+    const hasApiSuffix = BASE_URL.replace(/\/$/, '').endsWith('/api');
+    if (hasApiSuffix && url.startsWith('/api/')) {
+      cleanedUrl = url.substring(4); // Remove "/api"
+    }
+  }
+
+  const response = await fetch(`${BASE_URL}${cleanedUrl}`, {
     ...options,
     headers
   });
