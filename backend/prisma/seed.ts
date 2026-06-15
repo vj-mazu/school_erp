@@ -6,6 +6,13 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding Shantiniketan Public School database...');
 
+  // Check if database is already seeded
+  const userCount = await prisma.user.count();
+  if (userCount > 0) {
+    console.log('Database already contains data. Skipping seed to prevent data loss.');
+    return;
+  }
+
   // Clean up database tables to allow repeated seed runs
   await prisma.auditLog.deleteMany({});
   await prisma.notification.deleteMany({});
