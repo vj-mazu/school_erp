@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-800 font-sans;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-brand-orange-600 hover:bg-brand-orange-700 text-white font-medium rounded-lg shadow-sm hover:shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-orange-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply px-4 py-2 bg-brand-green-600 hover:bg-brand-green-700 text-white font-medium rounded-lg shadow-sm hover:shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-outline {
+    @apply px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-orange-500 focus:ring-offset-2;
+  }
+  .form-input {
+    @apply w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-orange-500 focus:border-brand-orange-500 transition-all duration-150 text-sm placeholder:text-slate-400;
+  }
+  .form-label {
+    @apply block text-sm font-semibold text-slate-700 mb-1.5;
+  }
+  .card {
+    @apply bg-white border border-slate-100 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 p-5;
+  }
+  .badge-orange {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-orange-50 text-brand-orange-700 border border-brand-orange-100;
+  }
+  .badge-green {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-green-50 text-brand-green-700 border border-brand-green-100;
+  }
+  
+  /* Excel worksheet styling */
+  .excel-table {
+    @apply w-full text-left text-[11px] border-collapse border border-blue-500;
+  }
+  .excel-th {
+    @apply py-1 px-1.5 bg-blue-800 text-white font-extrabold border border-blue-600 select-none uppercase tracking-wider text-[9px] text-center;
+  }
+  .excel-td {
+    @apply py-0.5 px-1.5 border border-blue-300 text-slate-700 bg-white hover:bg-blue-50/50 transition-colors leading-tight;
+  }
+  .excel-mono {
+    @apply font-mono font-bold tracking-tight text-slate-800;
+  }
+}
+
+/* Print Specific Rules for High-Fidelity Receipts and Reports */
+@media print {
+  @page {
+    size: portrait;
+    margin: 6mm;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+  main, body, #root {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .excel-table {
+    border-color: #3b82f6 !important;
+    width: 100% !important;
+    table-layout: auto !important;
+  }
+  .excel-th {
+    background-color: #1e40af !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    font-size: 8px !important;
+    padding: 4px 2px !important;
+  }
+  .excel-td {
+    background-color: white !important;
+    border-color: #93c5fd !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    font-size: 9px !important;
+    padding: 3px 2px !important;
+  }
+  .overflow-x-auto {
+    overflow: visible !important;
+  }
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-slate-100;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full hover:bg-slate-400;
+}
