@@ -73,7 +73,7 @@ router.get('/', authenticateToken as any, async (req: AuthenticatedRequest, res)
       where: { schoolId, academicYearId }
     });
 
-    if (currentYearIndex > 0 && targetStudentsCount === 0) {
+    if (currentYearIndex > 0) {
       const sourceYear = academicYears[currentYearIndex - 1];
 
       // Fetch all active students from the preceding year along with their guardians and current class details
