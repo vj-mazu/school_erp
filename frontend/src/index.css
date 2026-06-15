@@ -39,7 +39,7 @@
     @apply w-full text-left text-[11px] border-collapse border border-blue-500;
   }
   .excel-th {
-    @apply py-1 px-1.5 bg-blue-800 text-white font-extrabold border border-blue-600 select-none uppercase tracking-wider text-[9px] text-center;
+    @apply py-1 px-1.5 bg-blue-800 text-white font-extrabold border border-blue-600 select-none uppercase tracking-wider text-[9px] text-left;
   }
   .excel-td {
     @apply py-0.5 px-1.5 border border-blue-300 text-slate-700 bg-white hover:bg-blue-50/50 transition-colors leading-tight;

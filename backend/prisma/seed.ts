@@ -144,12 +144,12 @@ async function main() {
   // 4. Create Subjects
   console.log('Seeding subjects...');
   const subjectsData = [
-    { name: 'Mathematics', code: 'MATH', type: SubjectType.THEORY },
     { name: 'Science', code: 'SCI', type: SubjectType.BOTH },
     { name: 'English', code: 'ENG', type: SubjectType.THEORY, language: LanguageType.FIRST },
     { name: 'Hindi', code: 'HIN', type: SubjectType.THEORY, language: LanguageType.SECOND },
     { name: 'Social Science', code: 'SST', type: SubjectType.THEORY },
-    { name: 'Physical Education', code: 'PE', type: SubjectType.CO_SCHOLASTIC },
+    { name: 'EVS', code: 'EVS', type: SubjectType.THEORY },
+    { name: 'Kannada', code: 'KAN', type: SubjectType.THEORY, language: LanguageType.THIRD },
   ];
 
   const subjectsMap: { [key: string]: string } = {};
@@ -322,11 +322,11 @@ async function main() {
     }
   });
 
-  // Assign Subject Teacher to teach Mathematics in Class 1 Section A
+  // Assign Subject Teacher to teach Social Science in Class 1 Section A
   await prisma.staffSubjectAssignment.create({
     data: {
       staffId: staffSubjectTeacher.id,
-      subjectId: subjectsMap['MATH'],
+      subjectId: subjectsMap['SST'],
       sectionId: savedSectionsMap['Class 1-A'],
       academicYearId: currentYear.id
     }

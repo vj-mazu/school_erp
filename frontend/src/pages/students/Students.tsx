@@ -696,6 +696,24 @@ export const Students: React.FC = () => {
                   </select>
                 </div>
                 <div>
+                  <label className="form-label">Blood Group</label>
+                  <select
+                    value={formData.bloodGroup}
+                    onChange={(e) => setFormData({ ...formData, bloodGroup: e.target.value })}
+                    className="form-input"
+                  >
+                    <option value="UNKNOWN">Unknown</option>
+                    <option value="A_POSITIVE">A+</option>
+                    <option value="A_NEGATIVE">A-</option>
+                    <option value="B_POSITIVE">B+</option>
+                    <option value="B_NEGATIVE">B-</option>
+                    <option value="AB_POSITIVE">AB+</option>
+                    <option value="AB_NEGATIVE">AB-</option>
+                    <option value="O_POSITIVE">O+</option>
+                    <option value="O_NEGATIVE">O-</option>
+                  </select>
+                </div>
+                <div>
                   <label className="form-label">Aadhaar Card Number (12 digit)</label>
                   <input
                     type="text"
@@ -738,9 +756,15 @@ export const Students: React.FC = () => {
                   <input
                     type="text"
                     value={formData.satsNumber}
-                    onChange={(e) => setFormData({ ...formData, satsNumber: e.target.value.toUpperCase() })}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+                      if (val.length <= 9) {
+                        setFormData({ ...formData, satsNumber: val });
+                      }
+                    }}
+                    maxLength={9}
                     className="form-input uppercase"
-                    placeholder="State tracking ID (e.g. 1042319)"
+                    placeholder="9-char alphanumeric SATS ID"
                   />
                 </div>
                 <div>

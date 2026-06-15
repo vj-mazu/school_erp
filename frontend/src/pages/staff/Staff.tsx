@@ -14,6 +14,10 @@ export const Staff: React.FC = () => {
   const [search, setSearch] = useState('');
   const [filterDept, setFilterDept] = useState('');
 
+  // Edit and View states
+  const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
+  const [viewingStaff, setViewingStaff] = useState<any | null>(null);
+
   // Pagination states
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,14 +34,15 @@ export const Staff: React.FC = () => {
     mobile: '',
     email: '',
     address: '',
-    designation: 'TGT Science',
+    aadhaarNumber: '',
+    designation: '',
     department: 'Science',
     employeeType: 'PERMANENT',
     joiningDate: '',
-    basicSalary: '35000',
-    daPercent: '12',
-    hraPercent: '18',
-    taAmount: '1500',
+    basicSalary: '',
+    daPercent: '',
+    hraPercent: '',
+    taAmount: '',
     bankName: '',
     bankAccountNumber: '',
     bankIfsc: '',
@@ -81,6 +86,12 @@ export const Staff: React.FC = () => {
     }
   }, [filterDept, search, subView]);
 
+  const formatSalaryInput = (val: string) => {
+    const digits = val.replace(/\D/g, '');
+    if (!digits) return '';
+    return Number(digits).toLocaleString('en-IN');
+  };
+
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -103,13 +114,74 @@ export const Staff: React.FC = () => {
       return;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      showToast('Please enter a valid email address.', 'error');
+      return;
+    }
+
+    const payload = {
+      ...formData,
+      basicSalary: formData.basicSalary.replace(/,/g, ''),
+      daPercent: formData.daPercent.replace(/,/g, ''),
+      hraPercent: formData.hraPercent.replace(/,/g, ''),
+      taAmount: formData.taAmount.replace(/,/g, '')
+    };
+
     try {
-      await api.post('/api/staff', formData);
-      showToast('Staff registered successfully! OTP credentials generated.', 'success');
+      if (editingStaffId) {
+        await api.put(`/api/staff/${editingStaffId}`, payload);
+        showToast('Staff profile updated successfully!', 'success');
+      } else {
+        await api.post('/api/staff', payload);
+        showToast('Staff registered successfully! OTP credentials generated.', 'success');
+      }
       setSubView('list');
+      setEditingStaffId(null);
       setWizardTab(1);
     } catch (err: any) {
-      showToast(err.message || 'Registration failed', 'error');
+      showToast(err.message || 'Saving staff failed', 'error');
+    }
+  };
+
+  const handleEditClick = (st: any) => {
+    setEditingStaffId(st.id);
+    setFormData({
+      firstName: st.firstName || '',
+      lastName: st.lastName || '',
+      dateOfBirth: st.dateOfBirth ? st.dateOfBirth.split('T')[0] : '',
+      gender: st.gender || 'MALE',
+      bloodGroup: st.bloodGroup || 'O+',
+      mobile: st.mobile || '',
+      email: st.email || '',
+      address: st.address || '',
+      aadhaarNumber: st.aadhaarNumber || '',
+      designation: st.designation || '',
+      department: st.department || 'Science',
+      employeeType: st.employeeType || 'PERMANENT',
+      joiningDate: st.joiningDate ? st.joiningDate.split('T')[0] : '',
+      basicSalary: st.basicSalary ? Number(st.basicSalary).toLocaleString('en-IN') : '',
+      daPercent: String(st.daPercent || '12'),
+      hraPercent: String(st.hraPercent || '18'),
+      taAmount: st.taAmount ? Number(st.taAmount).toLocaleString('en-IN') : '',
+      bankName: st.bankName || '',
+      bankAccountNumber: st.bankAccountNumber || '',
+      bankIfsc: st.bankIfsc || '',
+      photoUrl: st.photoUrl || '',
+      role: st.user?.role || 'SUBJECT_TEACHER'
+    });
+    setSubView('add');
+    setWizardTab(1);
+  };
+
+  const handleToggleStatus = async (st: any) => {
+    const newStatus = st.status === 'ACTIVE' ? 'RESIGNED' : 'ACTIVE';
+    try {
+      await api.put(`/api/staff/${st.id}/status`, { status: newStatus });
+      showToast(`Staff status updated to ${newStatus}`, 'success');
+      loadStaff();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update status', 'error');
     }
   };
 
@@ -140,7 +212,10 @@ export const Staff: React.FC = () => {
 
         <div className="flex gap-2">
           <button 
-            onClick={() => setSubView('list')}
+            onClick={() => {
+              setEditingStaffId(null);
+              setSubView('list');
+            }}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
               subView === 'list' ? 'bg-brand-orange-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
             }`}
@@ -148,9 +223,37 @@ export const Staff: React.FC = () => {
             <UserCog size={14} /> Staff List
           </button>
           <button 
-            onClick={() => setSubView('add')}
+            onClick={() => {
+              setEditingStaffId(null);
+              setFormData({
+                firstName: '',
+                lastName: '',
+                dateOfBirth: '',
+                gender: 'MALE',
+                bloodGroup: 'O+',
+                mobile: '',
+                email: '',
+                address: '',
+                aadhaarNumber: '',
+                designation: '',
+                department: 'Science',
+                employeeType: 'PERMANENT',
+                joiningDate: '',
+                basicSalary: '',
+                daPercent: '',
+                hraPercent: '',
+                taAmount: '',
+                bankName: '',
+                bankAccountNumber: '',
+                bankIfsc: '',
+                photoUrl: '',
+                role: 'SUBJECT_TEACHER'
+              });
+              setSubView('add');
+              setWizardTab(1);
+            }}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              subView === 'add' ? 'bg-brand-orange-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+              subView === 'add' && !editingStaffId ? 'bg-brand-orange-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
             }`}
           >
             <UserPlus size={14} /> Add Staff
@@ -192,6 +295,8 @@ export const Staff: React.FC = () => {
               <option value="Science">Science</option>
               <option value="Mathematics">Mathematics</option>
               <option value="English">English</option>
+              <option value="Hindi">Hindi</option>
+              <option value="Kannada">Kannada</option>
               <option value="Administration">Administration</option>
               <option value="Other">Other</option>
             </select>
@@ -209,6 +314,7 @@ export const Staff: React.FC = () => {
                   <th className="excel-th">Mobile</th>
                   <th className="excel-th">Salary (Basic)</th>
                   <th className="excel-th">Status</th>
+                  <th className="excel-th w-24 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -228,11 +334,43 @@ export const Staff: React.FC = () => {
                     <td className="excel-td">{st.designation}</td>
                     <td className="excel-td">{st.department}</td>
                     <td className="excel-td excel-mono">{st.mobile}</td>
-                    <td className="excel-td excel-mono">₹{parseFloat(st.basicSalary).toLocaleString('en-IN')}</td>
+                    <td className="excel-td excel-mono">
+                      {st.basicSalary && !isNaN(parseFloat(st.basicSalary)) 
+                        ? `₹${parseFloat(st.basicSalary).toLocaleString('en-IN')}` 
+                        : '₹0'}
+                    </td>
                     <td className="excel-td">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-green-50 text-brand-green-700">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        st.status === 'ACTIVE' ? 'bg-brand-green-50 text-brand-green-700' : 'bg-slate-100 text-slate-600'
+                      }`}>
                         {st.status}
                       </span>
+                    </td>
+                    <td className="excel-td">
+                      <div className="flex gap-1 justify-center items-center py-0.5">
+                        <button 
+                          onClick={() => setViewingStaff(st)}
+                          className="px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-[10px] font-bold hover:bg-blue-100"
+                        >
+                          View
+                        </button>
+                        <button 
+                          onClick={() => handleEditClick(st)}
+                          className="px-1.5 py-0.5 bg-amber-50 text-amber-600 border border-amber-200 rounded text-[10px] font-bold hover:bg-amber-100"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleToggleStatus(st)}
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                            st.status === 'ACTIVE' 
+                              ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100' 
+                              : 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'
+                          }`}
+                        >
+                          {st.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -254,33 +392,16 @@ export const Staff: React.FC = () => {
           )}
         </div>
       ) : (
-        /* Add Wizard Form */
-        <div className="card space-y-6">
-          <div className="flex border-b border-slate-200 text-xs font-bold text-slate-500 overflow-x-auto">
-            {[
-              { num: 1, label: 'Personal Details', icon: UserCog },
-              { num: 2, label: 'Employment Settings', icon: Briefcase },
-              { num: 3, label: 'Salary & Allowances', icon: Banknote },
-              { num: 4, label: 'Bank Profile', icon: Landmark }
-            ].map(tab => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.num}
-                  onClick={() => setWizardTab(tab.num)}
-                  className={`py-3 px-4 border-b-2 flex items-center gap-1.5 shrink-0 transition-colors ${
-                    wizardTab === tab.num ? 'border-brand-orange-500 text-brand-orange-600 bg-orange-50/10' : 'border-transparent hover:text-slate-800'
-                  }`}
-                >
-                  <Icon size={14} />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+        /* Single-Page Professional Staff Form */
+        <form onSubmit={handleSaveStaff} noValidate className="space-y-6">
+          <div className="card space-y-6">
+            <h3 className="font-extrabold text-sm text-slate-700 border-b pb-2">
+              {editingStaffId ? 'Edit Staff Registration & Details' : 'Staff Admission & Enrollment Form'}
+            </h3>
 
-          <form onSubmit={handleSaveStaff} className="space-y-6">
-            {wizardTab === 1 && (
+            {/* Section 1: Personal Details */}
+            <div className="space-y-4">
+              <h4 className="font-bold text-xs text-brand-orange-600 uppercase tracking-wider">1. Personal Details</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
                   <label className="form-label">First Name *</label>
@@ -317,7 +438,14 @@ export const Staff: React.FC = () => {
                     type="text"
                     required
                     value={formData.mobile}
-                    onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      if (val.length <= 10) {
+                        setFormData({ ...formData, mobile: val });
+                      }
+                    }}
+                    maxLength={10}
+                    placeholder="10-digit mobile number"
                     className="form-input"
                   />
                 </div>
@@ -331,6 +459,52 @@ export const Staff: React.FC = () => {
                     className="form-input"
                   />
                 </div>
+                <div>
+                  <label className="form-label">Gender</label>
+                  <select
+                    value={formData.gender}
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                    className="form-input"
+                  >
+                    <option value="MALE">Male</option>
+                    <option value="FEMALE">Female</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">Blood Group</label>
+                  <select
+                    value={formData.bloodGroup}
+                    onChange={(e) => setFormData({ ...formData, bloodGroup: e.target.value })}
+                    className="form-input"
+                  >
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="UNKNOWN">Unknown</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label">Aadhaar Card Number (12 digit)</label>
+                  <input
+                    type="text"
+                    value={formData.aadhaarNumber}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      if (val.length <= 12) {
+                        setFormData({ ...formData, aadhaarNumber: val });
+                      }
+                    }}
+                    maxLength={12}
+                    placeholder="12-digit Aadhaar number"
+                    className="form-input"
+                  />
+                </div>
                 <div className="md:col-span-3">
                   <label className="form-label">Residential Address</label>
                   <textarea
@@ -341,7 +515,7 @@ export const Staff: React.FC = () => {
                   />
                 </div>
                 {/* Photo Selector */}
-                <div className="md:col-span-3 border-t border-slate-100 pt-4 flex items-center gap-4">
+                <div className="md:col-span-3 pt-2 flex items-center gap-4">
                   <div>
                     <label className="form-label">Profile Photo</label>
                     <input
@@ -350,7 +524,6 @@ export const Staff: React.FC = () => {
                       onChange={handlePhotoUpload}
                       className="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-orange-50 file:text-brand-orange-700 hover:file:bg-brand-orange-100"
                     />
-                    <p className="text-[10px] text-slate-400 mt-1">PNG, JPG up to 200KB. Automatically resized for database storage.</p>
                   </div>
                   {formData.photoUrl && (
                     <div className="relative w-14 h-14 rounded border overflow-hidden bg-slate-50 shadow-inner shrink-0">
@@ -366,18 +539,19 @@ export const Staff: React.FC = () => {
                   )}
                 </div>
               </div>
-            )}
+            </div>
 
-            {wizardTab === 2 && (
+            {/* Section 2: Employment Settings */}
+            <div className="space-y-4 border-t border-slate-100 pt-6">
+              <h4 className="font-bold text-xs text-brand-orange-600 uppercase tracking-wider">2. Employment Settings</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
                   <label className="form-label">Designation</label>
                   <input
                     type="text"
                     value={formData.designation}
-                    onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                    className="form-input"
-                    placeholder="e.g. TGT Science"
+                    onChange={(e) => setFormData({ ...formData, designation: e.target.value.toUpperCase() })}
+                    className="form-input uppercase"
                   />
                 </div>
                 <div>
@@ -390,18 +564,11 @@ export const Staff: React.FC = () => {
                     <option value="Science">Science</option>
                     <option value="Mathematics">Mathematics</option>
                     <option value="English">English</option>
+                    <option value="Hindi">Hindi</option>
+                    <option value="Kannada">Kannada</option>
                     <option value="Administration">Administration</option>
                     <option value="Other">Other</option>
                   </select>
-                </div>
-                <div>
-                  <label className="form-label">Joining Date</label>
-                  <input
-                    type="date"
-                    value={formData.joiningDate}
-                    onChange={(e) => setFormData({ ...formData, joiningDate: e.target.value })}
-                    className="form-input"
-                  />
                 </div>
                 <div>
                   <label className="form-label">Login Authorization Role</label>
@@ -417,17 +584,32 @@ export const Staff: React.FC = () => {
                     <option value="ADMIN">Admin Clerk</option>
                   </select>
                 </div>
+                <div>
+                  <label className="form-label">Joining Date</label>
+                  <input
+                    type="date"
+                    value={formData.joiningDate}
+                    onChange={(e) => setFormData({ ...formData, joiningDate: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
               </div>
-            )}
+            </div>
 
-            {wizardTab === 3 && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Section 3: Salary & Allowances */}
+            <div className="space-y-4 border-t border-slate-100 pt-6">
+              <h4 className="font-bold text-xs text-brand-orange-600 uppercase tracking-wider">3. Salary & Allowances</h4>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
                 <div>
                   <label className="form-label">Basic Salary (₹)</label>
                   <input
-                    type="number"
+                    type="text"
                     value={formData.basicSalary}
-                    onChange={(e) => setFormData({ ...formData, basicSalary: e.target.value })}
+                    onChange={(e) => {
+                      const formatted = formatSalaryInput(e.target.value);
+                      setFormData({ ...formData, basicSalary: formatted });
+                    }}
+                    placeholder="e.g. 11,000"
                     className="form-input"
                   />
                 </div>
@@ -452,24 +634,30 @@ export const Staff: React.FC = () => {
                 <div>
                   <label className="form-label">TA Allowance (₹)</label>
                   <input
-                    type="number"
+                    type="text"
                     value={formData.taAmount}
-                    onChange={(e) => setFormData({ ...formData, taAmount: e.target.value })}
+                    onChange={(e) => {
+                      const formatted = formatSalaryInput(e.target.value);
+                      setFormData({ ...formData, taAmount: formatted });
+                    }}
+                    placeholder="e.g. 1,500"
                     className="form-input"
                   />
                 </div>
               </div>
-            )}
+            </div>
 
-            {wizardTab === 4 && (
+            {/* Section 4: Bank Profile */}
+            <div className="space-y-4 border-t border-slate-100 pt-6">
+              <h4 className="font-bold text-xs text-brand-orange-600 uppercase tracking-wider">4. Bank Profile</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
                   <label className="form-label">Bank Name</label>
                   <input
                     type="text"
                     value={formData.bankName}
-                    onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
-                    className="form-input"
+                    onChange={(e) => setFormData({ ...formData, bankName: e.target.value.toUpperCase() })}
+                    className="form-input uppercase"
                   />
                 </div>
                 <div>
@@ -477,7 +665,14 @@ export const Staff: React.FC = () => {
                   <input
                     type="text"
                     value={formData.bankAccountNumber}
-                    onChange={(e) => setFormData({ ...formData, bankAccountNumber: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      if (val.length <= 12) {
+                        setFormData({ ...formData, bankAccountNumber: val });
+                      }
+                    }}
+                    maxLength={12}
+                    placeholder="Max 12 digits"
                     className="form-input"
                   />
                 </div>
@@ -486,43 +681,96 @@ export const Staff: React.FC = () => {
                   <input
                     type="text"
                     value={formData.bankIfsc}
-                    onChange={(e) => setFormData({ ...formData, bankIfsc: e.target.value })}
-                    className="form-input"
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+                      if (val.length <= 8) {
+                        setFormData({ ...formData, bankIfsc: val });
+                      }
+                    }}
+                    maxLength={8}
+                    placeholder="Max 8 chars"
+                    className="form-input uppercase"
                   />
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* Common Wizard Navigation Footer */}
-            <div className="flex justify-between items-center pt-6 border-t border-slate-100 mt-6">
+            {/* Form Action Footer */}
+            <div className="flex justify-end gap-3 pt-6 border-t border-slate-100 mt-6">
               <button
                 type="button"
-                disabled={wizardTab === 1}
-                onClick={() => setWizardTab(prev => Math.max(1, prev - 1))}
-                className="btn-outline text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                onClick={() => {
+                  setEditingStaffId(null);
+                  setSubView('list');
+                }}
+                className="btn-outline text-xs"
               >
-                ← Back
+                Cancel
               </button>
+              <button
+                type="submit"
+                className="btn-secondary text-xs flex items-center gap-1.5"
+              >
+                <Save size={14} /> {editingStaffId ? 'Update Staff Profile' : 'Save Staff Registry'}
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
 
-              <div className="flex gap-2">
-                {wizardTab < 4 && (
-                  <button
-                    type="button"
-                    onClick={() => setWizardTab(prev => Math.min(4, prev + 1))}
-                    className="btn-primary text-xs"
-                  >
-                    Next Tab →
-                  </button>
+      {/* Staff View Modal */}
+      {viewingStaff && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-6">
+            <div className="flex justify-between items-start border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-800">Staff Profile Details</h3>
+                <p className="text-xs text-slate-500">Employee ID: {viewingStaff.employeeId}</p>
+              </div>
+              <button 
+                onClick={() => setViewingStaff(null)}
+                className="text-slate-400 hover:text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-6">
+              <div className="w-24 h-24 rounded border bg-slate-50 flex items-center justify-center shrink-0 overflow-hidden">
+                {viewingStaff.photoUrl ? (
+                  <img src={viewingStaff.photoUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <Image size={32} className="text-slate-300" />
                 )}
-                <button
-                  type="submit"
-                  className="btn-secondary text-xs flex items-center gap-1.5"
-                >
-                  <Save size={14} /> Save Staff Registry
-                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-xs w-full">
+                <div><span className="font-semibold text-slate-500">Full Name:</span> <span className="text-slate-800 font-bold capitalize">{viewingStaff.firstName} {viewingStaff.lastName}</span></div>
+                <div><span className="font-semibold text-slate-500">Authorization Role:</span> <span className="text-slate-800 font-bold uppercase">{viewingStaff.user?.role || viewingStaff.role || 'N/A'}</span></div>
+                <div><span className="font-semibold text-slate-500">Mobile Number:</span> <span className="text-slate-800 font-mono">{viewingStaff.mobile}</span></div>
+                <div><span className="font-semibold text-slate-500">Email Address:</span> <span className="text-slate-800 font-mono">{viewingStaff.email}</span></div>
+                <div><span className="font-semibold text-slate-500">Designation:</span> <span className="text-slate-800 font-bold">{viewingStaff.designation}</span></div>
+                <div><span className="font-semibold text-slate-500">Department:</span> <span className="text-slate-800 font-bold">{viewingStaff.department}</span></div>
+                <div><span className="font-semibold text-slate-500">Gender:</span> <span className="text-slate-800 uppercase">{viewingStaff.gender}</span></div>
+                <div><span className="font-semibold text-slate-500">Blood Group:</span> <span className="text-slate-800">{viewingStaff.bloodGroup || 'N/A'}</span></div>
+                <div><span className="font-semibold text-slate-500">Joining Date:</span> <span className="text-slate-800">{viewingStaff.joiningDate ? new Date(viewingStaff.joiningDate).toLocaleDateString('en-IN') : 'N/A'}</span></div>
+                <div><span className="font-semibold text-slate-500">Basic Salary:</span> <span className="text-slate-800 font-mono">
+                  {viewingStaff.basicSalary && !isNaN(parseFloat(viewingStaff.basicSalary)) 
+                    ? `₹${parseFloat(viewingStaff.basicSalary).toLocaleString('en-IN')}` 
+                    : '₹0'}
+                </span></div>
+                <div className="sm:col-span-2"><span className="font-semibold text-slate-500">Residential Address:</span> <span className="text-slate-800">{viewingStaff.address || 'N/A'}</span></div>
               </div>
             </div>
-          </form>
+            
+            <div className="flex justify-end pt-4 border-t border-slate-100">
+              <button 
+                onClick={() => setViewingStaff(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-bold text-slate-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
