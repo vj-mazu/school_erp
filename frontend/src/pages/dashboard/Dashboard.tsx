@@ -38,26 +38,36 @@ export const Dashboard: React.FC = () => {
     day: 'numeric' 
   });
 
-  const schoolFullName = `${school?.name || 'Shantiniketan Public School'}${school?.city ? `, ${school.city}` : ''}`;
-  const bannerText = `★ ${schoolFullName} ★ ${schoolFullName} ★ ${schoolFullName} ★ ${schoolFullName} ★ ${schoolFullName} ★`;
+  const schoolName = school?.name || 'Shantiniketan Public School';
+  const schoolCity = school?.city || '';
 
   return (
     <div className="space-y-6">
       {/* Scrolling School Name Banner */}
-      <div className="relative overflow-hidden bg-slate-900 text-amber-400 py-3 px-4 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-lg select-none">
-        <div className="whitespace-nowrap animate-marquee flex gap-8">
-          <span>{bannerText}</span>
-          <span>{bannerText}</span>
+      <div className="relative overflow-hidden bg-slate-950 text-amber-400 py-3.5 rounded-2xl font-extrabold text-xs uppercase tracking-widest shadow-md border border-slate-800/60 select-none flex">
+        <div className="animate-marquee whitespace-nowrap flex items-center gap-12 pr-12 shrink-0">
+          {[...Array(6)].map((_, i) => (
+            <span key={i} className="flex items-center gap-4">
+              <span className="text-amber-500 text-sm">★</span>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300 font-black tracking-widest">{schoolName}</span>
+            </span>
+          ))}
+        </div>
+        <div className="animate-marquee whitespace-nowrap flex items-center gap-12 pr-12 shrink-0" aria-hidden="true">
+          {[...Array(6)].map((_, i) => (
+            <span key={i} className="flex items-center gap-4">
+              <span className="text-amber-500 text-sm">★</span>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300 font-black tracking-widest">{schoolName}</span>
+            </span>
+          ))}
         </div>
         <style>{`
           @keyframes marquee {
             0% { transform: translate3d(0, 0, 0); }
-            100% { transform: translate3d(-50%, 0, 0); }
+            100% { transform: translate3d(-100%, 0, 0); }
           }
           .animate-marquee {
-            display: inline-flex;
             animation: marquee 25s linear infinite;
-            width: max-content;
           }
         `}</style>
       </div>
@@ -65,7 +75,7 @@ export const Dashboard: React.FC = () => {
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Welcome & Illustration Column */}
-        <div className="lg:col-span-7 card bg-white flex flex-col md:flex-row items-center justify-between gap-6 p-6 shadow-sm relative overflow-hidden min-h-[300px]">
+        <div className="lg:col-span-7 card bg-white flex flex-col md:flex-row items-center justify-between gap-8 p-8 shadow-sm relative overflow-hidden min-h-[340px]">
           <div className="space-y-4 max-w-md">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-orange-50 text-brand-orange-700 rounded-full text-[10px] font-bold border border-brand-orange-100 uppercase tracking-wider">
               Academic Session 2026-27
@@ -74,16 +84,16 @@ export const Dashboard: React.FC = () => {
               Namaste, {user.name} 👋
             </h2>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Welcome back to your workspace. Here is a brief snapshot of Shantiniketan Public School's key metrics for today, <strong>{todayStr}</strong>.
+              Welcome back to your workspace. Here is a brief snapshot of {schoolName}'s key metrics for today, <strong>{todayStr}</strong>.
             </p>
             <div className="text-[11px] text-slate-400">
               Board Affiliation: MPBSE-AFF-330129 | DISE Code: 23260100101
             </div>
           </div>
-          <div className="w-56 h-56 flex items-center justify-center shrink-0">
+          <div className="w-64 h-64 md:w-72 md:h-72 flex items-center justify-center shrink-0">
             <img 
               src="/school_pupils.png" 
-              alt="School Boy and Girl" 
+              alt="School Illustration" 
               className="max-w-full max-h-full object-contain hover:scale-105 transition-transform duration-300"
             />
           </div>
