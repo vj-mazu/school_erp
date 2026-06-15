@@ -423,7 +423,7 @@ router.put('/:id', authenticateToken as any, authorizeRoles('SUPER_ADMIN', 'ADMI
 
 // TOGGLE STAFF STATUS
 router.put('/:id/status', authenticateToken as any, authorizeRoles('SUPER_ADMIN', 'ADMIN', 'PRINCIPAL') as any, logAuditEvent('UPDATE_STAFF_STATUS', 'staff') as any, async (req: AuthenticatedRequest, res) => {
-  const { status } = req.body; // e.g. ACTIVE or RESIGNED
+  const { status, statusReason } = req.body; // e.g. ACTIVE, RESIGNED, etc. and statusReason
   if (!status) return res.status(400).json({ message: 'Status is required' });
 
   try {
@@ -446,7 +446,10 @@ router.put('/:id/status', authenticateToken as any, authorizeRoles('SUPER_ADMIN'
     // Update staff status
     const updatedStaff = await prisma.staff.update({
       where: { id: staffId },
-      data: { status: status as StaffStatus }
+      data: { 
+        status: status as StaffStatus,
+        statusReason: isNowActive ? null : statusReason || null
+      }
     });
 
     res.json(updatedStaff);

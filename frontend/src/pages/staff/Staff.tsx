@@ -18,6 +18,8 @@ export const Staff: React.FC = () => {
   // Edit and View states
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
   const [viewingStaff, setViewingStaff] = useState<any | null>(null);
+  const [deactivatingStaff, setDeactivatingStaff] = useState<any | null>(null);
+  const [deactivateReason, setDeactivateReason] = useState('');
 
   // Pagination states
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -185,10 +187,35 @@ export const Staff: React.FC = () => {
   };
 
   const handleToggleStatus = async (st: any) => {
-    const newStatus = st.status === 'ACTIVE' ? 'RESIGNED' : 'ACTIVE';
+    const isCurrentlyActive = st.status === 'ACTIVE';
+    if (isCurrentlyActive) {
+      setDeactivatingStaff(st);
+      setDeactivateReason('');
+    } else {
+      const confirmActivate = window.confirm(`Are you sure you want to activate ${st.firstName} ${st.lastName}?`);
+      if (!confirmActivate) return;
+      try {
+        await api.put(`/api/staff/${st.id}/status`, { status: 'ACTIVE' });
+        showToast('Staff profile activated successfully.', 'success');
+        loadStaff();
+      } catch (err: any) {
+        showToast(err.message || 'Failed to update status', 'error');
+      }
+    }
+  };
+
+  const submitDeactivation = async () => {
+    if (!deactivateReason.trim()) {
+      showToast('Reason is required to deactivate a staff profile.', 'error');
+      return;
+    }
     try {
-      await api.put(`/api/staff/${st.id}/status`, { status: newStatus });
-      showToast(`Staff status updated to ${newStatus}`, 'success');
+      await api.put(`/api/staff/${deactivatingStaff.id}/status`, { 
+        status: 'RESIGNED', 
+        statusReason: deactivateReason.trim() 
+      });
+      showToast('Staff profile deactivated successfully.', 'success');
+      setDeactivatingStaff(null);
       loadStaff();
     } catch (err: any) {
       showToast(err.message || 'Failed to update status', 'error');
@@ -380,7 +407,7 @@ export const Staff: React.FC = () => {
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                         st.status === 'ACTIVE' ? 'bg-brand-green-50 text-brand-green-700' : 'bg-slate-100 text-slate-600'
                       }`}>
-                        {st.status}
+                        {st.status === 'ACTIVE' ? 'ACTIVE' : 'DEACTIVE'}
                       </span>
                     </td>
                     <td className="excel-td no-print">
@@ -795,6 +822,11 @@ export const Staff: React.FC = () => {
                     : '₹0'}
                 </span></div>
                 <div className="sm:col-span-2"><span className="font-semibold text-slate-500">Residential Address:</span> <span className="text-slate-800">{viewingStaff.address || 'N/A'}</span></div>
+                {viewingStaff.status !== 'ACTIVE' && viewingStaff.statusReason && (
+                  <div className="sm:col-span-2 text-xs text-rose-600 bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-100 font-semibold mt-1">
+                    Reason for Inactive: {viewingStaff.statusReason}
+                  </div>
+                )}
               </div>
             </div>
             
@@ -804,6 +836,44 @@ export const Staff: React.FC = () => {
                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-bold text-slate-700"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Deactivation Reason Modal */}
+      {deactivatingStaff && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-xl border border-slate-100 shadow-2xl max-w-md w-full p-6 space-y-4">
+            <div>
+              <h3 className="text-base font-extrabold text-slate-800">Deactivate Staff Profile</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Please provide the reason for making <b>{deactivatingStaff.firstName} {deactivatingStaff.lastName}</b> inactive.</p>
+            </div>
+            <div>
+              <label className="form-label text-xs">Reason for Deactivation *</label>
+              <textarea
+                rows={3}
+                required
+                value={deactivateReason}
+                onChange={(e) => setDeactivateReason(e.target.value)}
+                placeholder="e.g. Resigned, terminated, medical leave, retirement, etc."
+                className="form-input text-xs"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setDeactivatingStaff(null)}
+                className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitDeactivation}
+                className="px-4 py-2 bg-rose-600 text-white rounded-lg text-xs font-bold hover:bg-rose-700 transition-colors shadow"
+              >
+                Confirm Deactivate
               </button>
             </div>
           </div>

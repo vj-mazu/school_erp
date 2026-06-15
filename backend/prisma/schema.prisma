@@ -537,6 +537,7 @@ model Staff {
   previousExperience  Json?          @db.JsonB
 
   status              StaffStatus    @default(ACTIVE)
+  statusReason        String?        @map("status_reason") @db.Text
   createdAt           DateTime       @default(now()) @map("created_at")
   updatedAt           DateTime       @updatedAt @map("updated_at")
 

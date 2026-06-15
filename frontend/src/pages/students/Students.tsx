@@ -546,48 +546,42 @@ export const Students: React.FC = () => {
                         </div>
                       </td>
                       <td className="excel-td text-center">
-                        {isEditAuthorized ? (
-                          <button
-                            type="button"
-                            onClick={() => handleStatusToggle(st)}
-                            title={st.status === 'ACTIVE' ? "Click to Deactivate / Make Inactive" : "Click to Activate"}
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all hover:scale-105 active:scale-95 ${
-                              st.status === 'ACTIVE' 
-                                ? 'bg-brand-green-100 hover:bg-brand-green-200 text-brand-green-800' 
-                                : st.status === 'INACTIVE'
-                                  ? 'bg-rose-100 hover:bg-rose-200 text-rose-850'
-                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                            }`}
-                          >
-                            {st.status}
-                          </button>
-                        ) : (
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            st.status === 'ACTIVE' ? 'bg-brand-green-50 text-brand-green-700' : 'bg-slate-100 text-slate-600'
-                          }`}>
-                            {st.status}
-                          </span>
-                        )}
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          st.status === 'ACTIVE' ? 'bg-brand-green-50 text-brand-green-700' : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {st.status}
+                        </span>
                       </td>
                       <td className="excel-td text-center no-print">
-                        <div className="flex justify-center gap-1.5">
+                        <div className="flex justify-center gap-1 py-0.5">
                           <button
                             type="button"
                             onClick={() => setViewingStudent(st)}
-                            title="View Full Details"
-                            className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded transition-colors"
+                            className="px-1.5 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-[10px] font-bold hover:bg-blue-100"
                           >
-                            <Eye size={15} />
+                            View
                           </button>
                           {isEditAuthorized && (
-                            <button
-                              type="button"
-                              onClick={() => handleEditClick(st)}
-                              title="Edit Profile"
-                              className="p-1 text-brand-orange-600 hover:text-brand-orange-800 hover:bg-brand-orange-50 rounded transition-colors"
-                            >
-                              <Edit size={15} />
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleEditClick(st)}
+                                className="px-1.5 py-0.5 bg-amber-50 text-amber-600 border border-amber-200 rounded text-[10px] font-bold hover:bg-amber-100"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleStatusToggle(st)}
+                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                                  st.status === 'ACTIVE' 
+                                    ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100' 
+                                    : 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'
+                                }`}
+                              >
+                                {st.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>
