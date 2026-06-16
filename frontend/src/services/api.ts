@@ -29,8 +29,8 @@ async function request(url: string, options: RequestInit = {}) {
     headers
   });
 
-  if (response.status === 401) {
-    // Session expired
+  if (response.status === 401 || response.status === 403) {
+    // Session expired or token invalid/forbidden
     useAppStore.getState().logout();
     throw new Error('Session expired, please login again.');
   }
