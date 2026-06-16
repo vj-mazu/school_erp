@@ -379,7 +379,7 @@ export const Students: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex justify-between items-center no-print">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 no-print">
         <div>
           <h2 className="text-xl font-bold text-slate-800">Student Administration</h2>
           <p className="text-xs text-slate-500">Manage admissions, registers, detailed profiles, and promotions.</p>
@@ -408,7 +408,7 @@ export const Students: React.FC = () => {
       {/* Subviews */}
       {subView === 'list' ? (
         <div className="card space-y-4">
-          <div className="flex justify-between items-center pb-2 border-b border-slate-100 no-print">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center pb-2 border-b border-slate-100 no-print gap-2">
             <h3 className="font-bold text-sm text-slate-700">Worksheet Student Register Grid</h3>
             <div className="flex gap-2">
               <button 
@@ -436,8 +436,8 @@ export const Students: React.FC = () => {
           </div>
 
           {/* Search filters */}
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4 no-print">
-            <div className="relative">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3 no-print">
+            <div className="relative col-span-2 md:col-span-1">
               <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
                 <Search size={16} />
               </span>
@@ -510,7 +510,7 @@ export const Students: React.FC = () => {
           </div>
 
           {/* Student Grid/Table */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto hidden md:block">
             <table className="excel-table">
               <thead>
                 <tr className="bg-slate-700 text-white">
@@ -646,6 +646,116 @@ export const Students: React.FC = () => {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card Layout Lists (Active only on small screens) */}
+          <div className="block md:hidden space-y-3.5 no-print">
+            {students.map((st) => {
+              const father = st.guardians?.find((g: any) => g.type === 'FATHER');
+              const isEditAuthorized = user && ['SUPER_ADMIN', 'PRINCIPAL', 'ADMIN', 'ACCOUNTANT'].includes(user.role);
+              return (
+                <div key={st.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm space-y-3.5 hover:shadow-md transition-shadow">
+                  {/* Card Header: Photo, Name, Roll No & Status */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      {st.photoUrl ? (
+                        <img src={st.photoUrl} alt="" className="w-10 h-10 rounded-lg border object-cover shadow-inner shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg border bg-slate-55 flex items-center justify-center text-slate-400 shrink-0">
+                          <Image size={16} />
+                        </div>
+                      )}
+                      <div>
+                        <h4 className="font-extrabold text-slate-800 text-xs capitalize leading-tight">{st.firstName} {st.lastName}</h4>
+                        <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Roll No: {st.rollNumber || 'N/A'}</p>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold shrink-0 ${
+                      st.status === 'ACTIVE' ? 'bg-brand-green-50 text-brand-green-700' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {st.status === 'ACTIVE' ? 'ACTIVE' : 'DEACTIVE'}
+                    </span>
+                  </div>
+
+                  {/* Card Body Grid */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-[10px] border-t border-slate-100/60 pt-3 text-slate-600">
+                    <div>
+                      <span className="text-slate-400 font-medium block">Class & Section</span>
+                      <span className="font-bold text-slate-700">{st.class?.name || 'N/A'} - {st.section?.name || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium block">Admission No</span>
+                      <span className="font-bold text-slate-700 font-mono">{st.admissionNumber}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium block">Father's Name</span>
+                      <span className="font-bold text-slate-700 capitalize">{father ? father.name : 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium block">Father's Mobile</span>
+                      <span className="font-bold text-slate-700 font-mono">{father ? father.mobile : 'N/A'}</span>
+                    </div>
+                  </div>
+
+                  {/* Actions Row */}
+                  <div className="flex justify-end gap-1.5 pt-3 border-t border-slate-100/60">
+                    <button
+                      type="button"
+                      onClick={() => setViewingStudent(st)}
+                      className="px-2.5 py-1 bg-blue-50 text-blue-600 border border-blue-200/60 rounded-lg text-[10px] font-bold hover:bg-blue-100 transition-colors"
+                    >
+                      View Details
+                    </button>
+                    {isEditAuthorized && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleEditClick(st)}
+                          className="px-2.5 py-1 bg-amber-50 text-amber-600 border border-amber-200/60 rounded-lg text-[10px] font-bold hover:bg-amber-100 transition-colors"
+                        >
+                          Edit Profile
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleStatusToggle(st)}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-colors ${
+                            st.status === 'ACTIVE' 
+                              ? 'bg-rose-50 text-rose-600 border-rose-200/60 hover:bg-rose-100' 
+                              : 'bg-emerald-50 text-emerald-600 border-emerald-200/60 hover:bg-emerald-100'
+                          }`}
+                        >
+                          {st.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {students.length === 0 && (
+              <div className="p-8 bg-slate-50 border border-dashed rounded-xl text-center text-slate-400 font-bold text-xs">
+                {!(search || filterClass || filterSection || filterAdmissionNo || filterRte) ? (
+                  <div className="space-y-4 max-w-xs mx-auto my-2">
+                    <GraduationCap className="mx-auto text-brand-orange-400" size={36} />
+                    <div className="space-y-1">
+                      <h4 className="font-bold text-slate-700 text-xs">Empty Academic Year Registry</h4>
+                      <p className="text-[10px] text-slate-400 font-medium leading-relaxed">No students are currently active in this session. You can copy the previous year cohort.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCarryForward}
+                      disabled={carryingForward}
+                      className="w-full py-1.5 bg-brand-orange-600 text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    >
+                      {carryingForward ? 'Promoting...' : 'Carry Forward Students ➡️'}
+                    </button>
+                  </div>
+                ) : (
+                  'No student profiles match the filter criteria.'
+                )}
+              </div>
+            )}
           </div>
 
           {/* Cursor pagination controls */}

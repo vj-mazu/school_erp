@@ -244,7 +244,7 @@ export const Staff: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* View Header */}
-      <div className="flex justify-between items-center no-print">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 no-print">
         <div>
           <h2 className="text-xl font-bold text-slate-800">Staff & HR Management</h2>
           <p className="text-xs text-slate-500">Coordinate employee registers, qualifications, salary sheets, and roles.</p>
@@ -303,7 +303,7 @@ export const Staff: React.FC = () => {
 
       {subView === 'list' ? (
         <div className="card space-y-4">
-          <div className="flex justify-between items-center pb-2 border-b border-slate-100 no-print">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center pb-2 border-b border-slate-100 no-print gap-2">
             <h3 className="font-bold text-sm text-slate-700">Worksheet Staff Registry Grid</h3>
             <div className="flex gap-2">
               <button 
@@ -321,8 +321,8 @@ export const Staff: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 no-print">
-            <div className="relative md:col-span-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 no-print">
+            <div className="relative col-span-2 md:col-span-2">
               <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
                 <Search size={16} />
               </span>
@@ -369,7 +369,7 @@ export const Staff: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto hidden md:block">
             <table className="excel-table">
               <thead>
                 <tr>
@@ -443,6 +443,94 @@ export const Staff: React.FC = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card Layout Lists (Active only on small screens) */}
+          <div className="block md:hidden space-y-3.5 no-print">
+            {staff.map((st) => (
+              <div key={st.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm space-y-3.5 hover:shadow-md transition-shadow">
+                {/* Card Header: Photo, Name, Employee ID & Status */}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    {st.photoUrl ? (
+                      <img src={st.photoUrl} alt="" className="w-10 h-10 rounded-lg border object-cover shadow-inner shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg border bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
+                        <Image size={16} />
+                      </div>
+                    )}
+                    <div>
+                      <h4 className="font-extrabold text-slate-800 text-xs capitalize leading-tight">{st.firstName} {st.lastName}</h4>
+                      <p className="text-[10px] text-slate-400 font-semibold mt-0.5">ID: {st.employeeId}</p>
+                    </div>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[9px] font-bold shrink-0 ${
+                    st.status === 'ACTIVE' ? 'bg-brand-green-50 text-brand-green-700' : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {st.status === 'ACTIVE' ? 'ACTIVE' : 'DEACTIVE'}
+                  </span>
+                </div>
+
+                {/* Card Body Grid */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-[10px] border-t border-slate-100/60 pt-3 text-slate-600">
+                  <div>
+                    <span className="text-slate-400 font-medium block">Designation</span>
+                    <span className="font-bold text-slate-700">{st.designation}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-medium block">Department</span>
+                    <span className="font-bold text-slate-700">{st.department}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-medium block">Mobile</span>
+                    <span className="font-bold text-slate-700 font-mono">{st.mobile}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-medium block">Basic Salary</span>
+                    <span className="font-bold text-slate-700 font-mono">
+                      {st.basicSalary && !isNaN(parseFloat(st.basicSalary)) 
+                        ? `₹${parseFloat(st.basicSalary).toLocaleString('en-IN')}` 
+                        : '₹0'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Actions Row */}
+                <div className="flex justify-end gap-1.5 pt-3 border-t border-slate-100/60">
+                  <button
+                    type="button"
+                    onClick={() => setViewingStaff(st)}
+                    className="px-2.5 py-1 bg-blue-50 text-blue-600 border border-blue-200/60 rounded-lg text-[10px] font-bold hover:bg-blue-100 transition-colors"
+                  >
+                    View Details
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleEditClick(st)}
+                    className="px-2.5 py-1 bg-amber-50 text-amber-600 border border-amber-200/60 rounded-lg text-[10px] font-bold hover:bg-amber-100 transition-colors"
+                  >
+                    Edit Profile
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleStatus(st)}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-colors ${
+                      st.status === 'ACTIVE' 
+                        ? 'bg-rose-50 text-rose-600 border-rose-200/60 hover:bg-rose-100' 
+                        : 'bg-emerald-50 text-emerald-600 border-emerald-200/60 hover:bg-emerald-100'
+                    }`}
+                  >
+                    {st.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {staff.length === 0 && (
+              <div className="p-8 bg-slate-50 border border-dashed rounded-xl text-center text-slate-400 font-bold text-xs py-10">
+                No staff profiles match the filter criteria.
+              </div>
+            )}
           </div>
 
           {/* Cursor pagination controls */}

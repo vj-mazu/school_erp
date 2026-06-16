@@ -90,7 +90,7 @@ export const Dashboard: React.FC = () => {
               Board Affiliation: MPBSE-AFF-330129 | DISE Code: 23260100101
             </div>
           </div>
-          <div className="w-64 h-64 md:w-72 md:h-72 flex items-center justify-center shrink-0">
+          <div className="w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 flex items-center justify-center shrink-0">
             <img 
               src="/school_pupils.png" 
               alt="School Illustration" 
