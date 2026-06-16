@@ -36,6 +36,8 @@ export const Students: React.FC = () => {
   const [viewingStudent, setViewingStudent] = useState<any>(null);
   const [deactivatingStudent, setDeactivatingStudent] = useState<any>(null);
   const [deactivateReason, setDeactivateReason] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [carryingForward, setCarryingForward] = useState(false);
 
   // Single-Page Form State
   const [formData, setFormData] = useState({
@@ -182,6 +184,7 @@ export const Students: React.FC = () => {
     }
 
     try {
+      setSaving(true);
       const payload = {
         ...formData,
         satsNumber: formData.satsNumber || undefined,
@@ -258,6 +261,8 @@ export const Students: React.FC = () => {
       setAadhaar('');
     } catch (err: any) {
       showToast(err.message || 'Saving failed', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -334,6 +339,19 @@ export const Students: React.FC = () => {
       loadData();
     } catch (err: any) {
       showToast(err.message || 'Status toggle failed', 'error');
+    }
+  };
+
+  const handleCarryForward = async () => {
+    try {
+      setCarryingForward(true);
+      const res = await api.post('/api/students/carry-forward', { academicYearId: filterYear });
+      showToast(res.message || 'Students carried forward successfully.', 'success');
+      loadData();
+    } catch (err: any) {
+      showToast(err.message || 'Carry forward failed', 'error');
+    } finally {
+      setCarryingForward(false);
     }
   };
 
@@ -590,7 +608,40 @@ export const Students: React.FC = () => {
                 })}
                 {students.length === 0 && (
                   <tr>
-                    <td colSpan={11} className="excel-td text-center py-6 text-slate-400 font-bold">No active student profiles match the filter criteria.</td>
+                    <td colSpan={11} className="excel-td py-8">
+                      {!(search || filterClass || filterSection || filterAdmissionNo || filterRte) ? (
+                        <div className="p-8 bg-brand-orange-50/40 border border-brand-orange-100/60 rounded-xl text-center space-y-4 max-w-md mx-auto my-4 shadow-sm">
+                          <GraduationCap className="mx-auto text-brand-orange-500" size={44} />
+                          <div className="space-y-1">
+                            <h4 className="font-bold text-slate-800 text-sm">Empty Academic Year Registry</h4>
+                            <p className="text-[11px] text-slate-500 leading-relaxed">There are no student profiles enrolled in this academic year. You can carry forward and promote all active students from the previous academic year automatically.</p>
+                          </div>
+                          <div className="flex justify-center pt-2">
+                            <button
+                              type="button"
+                              onClick={handleCarryForward}
+                              disabled={carryingForward}
+                              className="px-4 py-2 bg-brand-orange-600 hover:bg-brand-orange-700 text-white rounded-lg text-[11px] font-bold transition-all shadow-sm hover:shadow flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {carryingForward ? (
+                                <>
+                                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                  Promoting & Cloning Cohorts...
+                                </>
+                              ) : (
+                                <>
+                                  Carry Forward & Promote Active Students ➡️
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center text-slate-400 font-bold py-6">
+                          No student profiles match the filter criteria.
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -1043,9 +1094,19 @@ export const Students: React.FC = () => {
             <div className="flex justify-end pt-4 border-t border-slate-100">
               <button
                 type="submit"
-                className="btn-secondary text-xs flex items-center gap-1.5 px-6 py-2"
+                disabled={saving}
+                className="btn-secondary text-xs flex items-center gap-1.5 px-6 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Save size={14} /> {editingStudentId ? 'Save Changes & Update Profile' : 'Submit & Admit Student'}
+                {saving ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save size={14} /> {editingStudentId ? 'Save Changes & Update Profile' : 'Submit & Admit Student'}
+                  </>
+                )}
               </button>
             </div>
           </div>

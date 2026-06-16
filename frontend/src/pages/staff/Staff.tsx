@@ -15,11 +15,11 @@ export const Staff: React.FC = () => {
   const [filterDept, setFilterDept] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
-  // Edit and View states
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
   const [viewingStaff, setViewingStaff] = useState<any | null>(null);
   const [deactivatingStaff, setDeactivatingStaff] = useState<any | null>(null);
   const [deactivateReason, setDeactivateReason] = useState('');
+  const [saving, setSaving] = useState(false);
 
   // Pagination states
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -141,6 +141,7 @@ export const Staff: React.FC = () => {
     };
 
     try {
+      setSaving(true);
       if (editingStaffId) {
         await api.put(`/api/staff/${editingStaffId}`, payload);
         showToast('Staff profile updated successfully!', 'success');
@@ -153,6 +154,8 @@ export const Staff: React.FC = () => {
       setWizardTab(1);
     } catch (err: any) {
       showToast(err.message || 'Saving staff failed', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -772,9 +775,19 @@ export const Staff: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="btn-secondary text-xs flex items-center gap-1.5"
+                disabled={saving}
+                className="btn-secondary text-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Save size={14} /> {editingStaffId ? 'Update Staff Profile' : 'Save Staff Registry'}
+                {saving ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save size={14} /> {editingStaffId ? 'Update Staff Profile' : 'Save Staff Registry'}
+                  </>
+                )}
               </button>
             </div>
           </div>

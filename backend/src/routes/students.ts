@@ -54,155 +54,11 @@ router.get('/admission-number', authenticateToken as any, async (req: Authentica
 
 // LIST STUDENTS
 router.get('/', authenticateToken as any, async (req: AuthenticatedRequest, res) => {
-  const { classId, sectionId, status, search, rteStudent, admissionNumber, limit, cursor } = req.query;
+  const { classId, sectionId, status, search, rteStudent, admissionNumber, limit, cursor, academicYearId: queryYearId } = req.query;
   const schoolId = req.user?.schoolId;
-  const academicYearId = req.headers['x-academic-year-id'] as string || '11111111-1111-1111-1111-111111111111';
+  const academicYearId = (queryYearId || req.headers['x-academic-year-id']) as string || '11111111-1111-1111-1111-111111111111';
 
   try {
-    // Find all academic years of the school, sorted chronologically
-    const academicYears = await prisma.academicYear.findMany({
-      where: { schoolId },
-      orderBy: { startDate: 'asc' }
-    });
-
-    const currentYearIndex = academicYears.findIndex(y => y.id === academicYearId);
-
-    // Only carry forward/promote if there is a chronologically preceding academic year in the database
-    // and if the current academic year is completely empty of students (run promotion only once)
-    const targetStudentsCount = await prisma.student.count({
-      where: { schoolId, academicYearId }
-    });
-
-    if (currentYearIndex > 0) {
-      const sourceYear = academicYears[currentYearIndex - 1];
-
-      // Fetch all active students from the preceding year along with their guardians and current class details
-      const activeStudentsToCopy = await prisma.student.findMany({
-        where: {
-          schoolId,
-          academicYearId: sourceYear.id,
-          status: 'ACTIVE'
-        },
-        include: {
-          guardians: true,
-          class: true,
-          section: true
-        }
-      });
-
-      // Fetch all classes of this school to perform sequential promotion lookup
-      const classesList = await prisma.class.findMany({
-        where: { schoolId },
-        include: { sections: true },
-        orderBy: { orderIndex: 'asc' }
-      });
-
-      for (const st of activeStudentsToCopy) {
-        // Check if this student already has a record in the target year context
-        const existsInTarget = await prisma.student.findFirst({
-          where: {
-            userId: st.userId,
-            academicYearId: academicYearId
-          }
-        });
-
-        if (!existsInTarget) {
-          // Find the student's next chronological class (sequential promotion)
-          const currentClassIndex = classesList.findIndex(c => c.id === st.classId);
-          let targetClassId = st.classId;
-          let targetSectionId = st.sectionId;
-          let newStatus = st.status; // defaults to ACTIVE
-
-          if (currentClassIndex !== -1 && currentClassIndex < classesList.length - 1) {
-            // Promote to next higher class in the list
-            const nextClass = classesList[currentClassIndex + 1];
-            targetClassId = nextClass.id;
-
-            // Attempt to auto-map section to the same section name in the new class (e.g. Section "A" -> "A")
-            if (st.section) {
-              const matchingSection = nextClass.sections.find(s => s.name.toUpperCase() === st.section!.name.toUpperCase());
-              if (matchingSection) {
-                targetSectionId = matchingSection.id;
-              } else if (nextClass.sections.length > 0) {
-                // Default to the first section if exact name match isn't found
-                const sortedSections = [...nextClass.sections].sort((a, b) => a.name.localeCompare(b.name));
-                targetSectionId = sortedSections[0].id;
-              } else {
-                targetSectionId = null;
-              }
-            } else {
-              targetSectionId = null;
-            }
-          } else if (currentClassIndex === classesList.length - 1) {
-            // Highest class reached: Mark as ALUMNI in the new year context
-            newStatus = 'ALUMNI';
-            targetSectionId = null;
-          }
-
-          await prisma.student.create({
-            data: {
-              schoolId: st.schoolId,
-              userId: st.userId,
-              admissionNumber: st.admissionNumber,
-              satsNumber: st.satsNumber,
-              slNo: st.slNo,
-              academicYearId: academicYearId,
-              firstName: st.firstName,
-              lastName: st.lastName,
-              fullNameAsPerAadhaar: st.fullNameAsPerAadhaar,
-              dateOfBirth: st.dateOfBirth,
-              gender: st.gender,
-              bloodGroup: st.bloodGroup,
-              religion: st.religion,
-              caste: st.caste,
-              category: st.category,
-              nationality: st.nationality,
-              motherTongue: st.motherTongue,
-              aadhaarNumber: st.aadhaarNumber,
-              aadhaarMasked: st.aadhaarMasked,
-              photoUrl: st.photoUrl,
-              classId: targetClassId,
-              sectionId: targetSectionId,
-              rollNumber: null, // Reset roll numbers to allow re-assignment in the new class cohort
-              mediumOfInstruction: st.mediumOfInstruction,
-              board: st.board,
-              house: st.house,
-              rteStudent: st.rteStudent,
-              address: st.address,
-              city: st.city,
-              taluka: st.taluka,
-              village: st.village,
-              pincode: st.pincode,
-              status: newStatus,
-              statusReason: st.statusReason,
-              admissionDate: st.admissionDate,
-              knownAllergies: st.knownAllergies,
-              medicalConditions: st.medicalConditions,
-              disabilityType: st.disabilityType,
-              cwsn: st.cwsn,
-              guardians: {
-                create: st.guardians.map(g => ({
-                  type: g.type,
-                  name: g.name,
-                  relation: g.relation,
-                  occupation: g.occupation,
-                  annualIncome: g.annualIncome,
-                  qualification: g.qualification,
-                  aadhaarNumber: g.aadhaarNumber,
-                  mobile: g.mobile,
-                  whatsappNumber: g.whatsappNumber,
-                  email: g.email,
-                  isPrimaryContact: g.isPrimaryContact,
-                  address: g.address,
-                  officeAddress: g.officeAddress
-                }))
-              }
-            }
-          });
-        }
-      }
-    }
-
     const filters: any = { schoolId, academicYearId };
 
     if (classId) filters.classId = classId as string;
@@ -730,6 +586,182 @@ router.post('/promote', authenticateToken as any, authorizeRoles('SUPER_ADMIN', 
     res.json({ success: true, message: `Successfully promoted ${results.count} students.` });
   } catch (error: any) {
     res.status(500).json({ message: 'Promotion failed', error: error.message });
+  }
+});
+
+// CARRY FORWARD / PROMOTE ALL ACTIVE STUDENTS FROM PRECEDING ACADEMIC YEAR
+router.post('/carry-forward', authenticateToken as any, authorizeRoles('SUPER_ADMIN', 'PRINCIPAL') as any, logAuditEvent('CARRY_FORWARD_STUDENTS', 'students') as any, async (req: AuthenticatedRequest, res) => {
+  const schoolId = req.user?.schoolId;
+  const targetAcademicYearId = (req.body.academicYearId || req.headers['x-academic-year-id']) as string;
+
+  if (!schoolId) return res.status(400).json({ message: 'School context missing' });
+  if (!targetAcademicYearId) return res.status(400).json({ message: 'Target Academic Year context missing' });
+
+  try {
+    // Find all academic years of the school, sorted chronologically
+    const academicYears = await prisma.academicYear.findMany({
+      where: { schoolId },
+      orderBy: { startDate: 'asc' }
+    });
+
+    const targetYearIndex = academicYears.findIndex(y => y.id === targetAcademicYearId);
+    if (targetYearIndex <= 0) {
+      return res.status(400).json({ message: 'No preceding academic year found to carry forward from.' });
+    }
+
+    const sourceYear = academicYears[targetYearIndex - 1];
+
+    // Fetch all active students from the preceding year along with their guardians
+    const activeStudentsToCopy = await prisma.student.findMany({
+      where: {
+        schoolId,
+        academicYearId: sourceYear.id,
+        status: 'ACTIVE'
+      },
+      include: {
+        guardians: true,
+        class: true,
+        section: true
+      }
+    });
+
+    if (activeStudentsToCopy.length === 0) {
+      return res.json({ success: true, count: 0, message: 'No active students found in the previous year to copy.' });
+    }
+
+    // Fetch all classes of this school to perform sequential promotion lookup
+    const classesList = await prisma.class.findMany({
+      where: { schoolId },
+      include: { sections: true },
+      orderBy: { orderIndex: 'asc' }
+    });
+
+    // Query existing student user IDs in the target year to avoid duplication (Anti-double saving check)
+    const existingStudents = await prisma.student.findMany({
+      where: {
+        schoolId,
+        academicYearId: targetAcademicYearId
+      },
+      select: { userId: true }
+    });
+    const existingUserIds = new Set(existingStudents.map(e => e.userId));
+
+    // Filter out students that are already cloned
+    const studentsToClone = activeStudentsToCopy.filter(st => !existingUserIds.has(st.userId));
+
+    if (studentsToClone.length === 0) {
+      return res.json({ success: true, count: 0, message: 'All active students have already been carried forward.' });
+    }
+
+    // Perform chunked insertions (100 at a time) for scalability
+    let clonedCount = 0;
+    const chunkSize = 100;
+    for (let i = 0; i < studentsToClone.length; i += chunkSize) {
+      const chunk = studentsToClone.slice(i, i + chunkSize);
+      
+      await prisma.$transaction(
+        chunk.map(st => {
+          // Find the student's next chronological class (sequential promotion)
+          const currentClassIndex = classesList.findIndex(c => c.id === st.classId);
+          let targetClassId = st.classId;
+          let targetSectionId = st.sectionId;
+          let newStatus = st.status; // ACTIVE
+
+          if (currentClassIndex !== -1 && currentClassIndex < classesList.length - 1) {
+            // Promote to next higher class in the list
+            const nextClass = classesList[currentClassIndex + 1];
+            targetClassId = nextClass.id;
+
+            // Attempt to auto-map section to the same section name in the new class (e.g. Section "A" -> "A")
+            if (st.section) {
+              const matchingSection = nextClass.sections.find(s => s.name.toUpperCase() === st.section!.name.toUpperCase());
+              if (matchingSection) {
+                targetSectionId = matchingSection.id;
+              } else if (nextClass.sections.length > 0) {
+                // Default to first section alphabetical
+                const sortedSections = [...nextClass.sections].sort((a, b) => a.name.localeCompare(b.name));
+                targetSectionId = sortedSections[0].id;
+              } else {
+                targetSectionId = null;
+              }
+            } else {
+              targetSectionId = null;
+            }
+          } else if (currentClassIndex === classesList.length - 1) {
+            // Highest class reached: Mark as ALUMNI
+            newStatus = 'ALUMNI';
+            targetSectionId = null;
+          }
+
+          return prisma.student.create({
+            data: {
+              schoolId: st.schoolId,
+              userId: st.userId,
+              admissionNumber: st.admissionNumber,
+              satsNumber: st.satsNumber,
+              slNo: st.slNo,
+              academicYearId: targetAcademicYearId,
+              firstName: st.firstName,
+              lastName: st.lastName,
+              fullNameAsPerAadhaar: st.fullNameAsPerAadhaar,
+              dateOfBirth: st.dateOfBirth,
+              gender: st.gender,
+              bloodGroup: st.bloodGroup,
+              religion: st.religion,
+              caste: st.caste,
+              category: st.category,
+              nationality: st.nationality,
+              motherTongue: st.motherTongue,
+              aadhaarNumber: st.aadhaarNumber,
+              aadhaarMasked: st.aadhaarMasked,
+              photoUrl: st.photoUrl,
+              classId: targetClassId,
+              sectionId: targetSectionId,
+              rollNumber: null, // Reset roll numbers for new class
+              mediumOfInstruction: st.mediumOfInstruction,
+              board: st.board,
+              house: st.house,
+              rteStudent: st.rteStudent,
+              address: st.address,
+              city: st.city,
+              taluka: st.taluka,
+              village: st.village,
+              pincode: st.pincode,
+              status: newStatus,
+              statusReason: st.statusReason,
+              admissionDate: st.admissionDate,
+              knownAllergies: st.knownAllergies,
+              medicalConditions: st.medicalConditions,
+              disabilityType: st.disabilityType,
+              cwsn: st.cwsn,
+              guardians: {
+                create: st.guardians.map(g => ({
+                  type: g.type,
+                  name: g.name,
+                  relation: g.relation,
+                  occupation: g.occupation,
+                  annualIncome: g.annualIncome,
+                  qualification: g.qualification,
+                  aadhaarNumber: g.aadhaarNumber,
+                  mobile: g.mobile,
+                  whatsappNumber: g.whatsappNumber,
+                  email: g.email,
+                  isPrimaryContact: g.isPrimaryContact,
+                  address: g.address,
+                  officeAddress: g.officeAddress
+                }))
+              }
+            }
+          });
+        })
+      );
+
+      clonedCount += chunk.length;
+    }
+
+    res.json({ success: true, count: clonedCount, message: `Successfully carried forward/promoted ${clonedCount} active students.` });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Carry forward failed', error: error.message });
   }
 });
 
