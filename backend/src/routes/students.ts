@@ -73,7 +73,8 @@ router.get('/', authenticateToken as any, async (req: AuthenticatedRequest, res)
       filters.OR = [
         { firstName: { contains: search as string, mode: 'insensitive' } },
         { lastName: { contains: search as string, mode: 'insensitive' } },
-        { admissionNumber: { contains: search as string, mode: 'insensitive' } }
+        { admissionNumber: { contains: search as string, mode: 'insensitive' } },
+        { guardians: { some: { name: { contains: search as string, mode: 'insensitive' } } } }
       ];
     }
 

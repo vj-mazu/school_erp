@@ -76,23 +76,10 @@ async function main() {
     create: {
       id: '11111111-1111-1111-1111-111111111111',
       schoolId: school.id,
-      name: '2025-26',
-      startDate: new Date('2025-04-01'),
-      endDate: new Date('2026-03-31'),
-      isCurrent: true
-    }
-  });
-
-  const nextYear = await prisma.academicYear.upsert({
-    where: { id: '11111111-1111-1111-1111-111111111112' },
-    update: {},
-    create: {
-      id: '11111111-1111-1111-1111-111111111112',
-      schoolId: school.id,
       name: '2026-27',
-      startDate: new Date('2026-04-01'),
-      endDate: new Date('2027-03-31'),
-      isCurrent: false
+      startDate: new Date('2026-06-01'),
+      endDate: new Date('2027-05-31'),
+      isCurrent: true
     }
   });
 
@@ -182,44 +169,7 @@ async function main() {
     }
   }
 
-  // 5. Create Fee Heads
-  console.log('Seeding Fee Heads...');
-  const tuitionHead = await prisma.feeHead.create({
-    data: { schoolId: school.id, name: 'Tuition Fee', feeType: FeeType.TUITION, isMandatory: true }
-  });
-  const devHead = await prisma.feeHead.create({
-    data: { schoolId: school.id, name: 'Development Fee', feeType: FeeType.DEVELOPMENT, isMandatory: true }
-  });
-  const examHead = await prisma.feeHead.create({
-    data: { schoolId: school.id, name: 'Exam Fee', feeType: FeeType.EXAM, isMandatory: true }
-  });
 
-  // Assign a basic tuition fee structure for LKG & Class 1
-  await prisma.feeStructure.create({
-    data: {
-      schoolId: school.id,
-      academicYearId: currentYear.id,
-      classId: savedClassesMap['LKG'],
-      feeHeadId: tuitionHead.id,
-      amount: 2500.00,
-      frequency: FeeFrequency.MONTHLY,
-      dueDay: 10,
-      lateFinePerDay: 10.00
-    }
-  });
-
-  await prisma.feeStructure.create({
-    data: {
-      schoolId: school.id,
-      academicYearId: currentYear.id,
-      classId: savedClassesMap['Class 1'],
-      feeHeadId: tuitionHead.id,
-      amount: 3500.00,
-      frequency: FeeFrequency.MONTHLY,
-      dueDay: 10,
-      lateFinePerDay: 15.00
-    }
-  });
 
   // 6. Create Users for all roles
   console.log('Seeding default role users...');
@@ -312,25 +262,7 @@ async function main() {
     data: { classTeacherId: staffClassTeacher.id }
   });
 
-  // Assign Class Teacher to teach Science in Class 1 Section A
-  await prisma.staffSubjectAssignment.create({
-    data: {
-      staffId: staffClassTeacher.id,
-      subjectId: subjectsMap['SCI'],
-      sectionId: savedSectionsMap['Class 1-A'],
-      academicYearId: currentYear.id
-    }
-  });
 
-  // Assign Subject Teacher to teach Social Science in Class 1 Section A
-  await prisma.staffSubjectAssignment.create({
-    data: {
-      staffId: staffSubjectTeacher.id,
-      subjectId: subjectsMap['SST'],
-      sectionId: savedSectionsMap['Class 1-A'],
-      academicYearId: currentYear.id
-    }
-  });
 
   console.log('Seed completed successfully.');
   console.log('Test Accounts created:');

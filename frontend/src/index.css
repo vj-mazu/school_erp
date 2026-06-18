@@ -52,8 +52,8 @@
 /* Print Specific Rules for High-Fidelity Receipts and Reports */
 @media print {
   @page {
-    size: portrait;
-    margin: 6mm;
+    size: portrait !important;
+    margin: 6mm !important;
   }
   .no-print {
     display: none !important;
@@ -76,9 +76,10 @@
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
     border: none !important;
     box-shadow: none !important;
   }
